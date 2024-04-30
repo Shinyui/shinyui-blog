@@ -1,0 +1,77 @@
+---
+title: 5 種修正資料偏態的方法及其Python應用
+description: 5 種修正資料偏態的方法及其Python應用
+slug: fix-data-skewness
+date: 2020-08-30
+type: Post
+---
+
+不管是在統計或是在機器學習中，常態分佈（Normal Distribution）絕對是最常見的其中一種假設之一。但是問題來了，在現實中的資料並不是每次都是呈現常態分佈，那我們該怎麼辦呢？我們可以利用一些神奇的方法諸如：Log Transformation、Square-Root Transformation 或是 Box-Cox 等方法來將資料從偏態修正回常態分佈。在這篇文章中我們將會帶你認識 5 種修正資料偏態的方法以及修正前後的對比也會在這篇文章中一併展示出來。
+
+## 對數轉換（Log Transformation）
+
+在修正資料偏態最常見的方法之一是對數轉換（Log Transformation），它的原理也非常簡單就是將每個資料取對數，對數可以 2、10 或是自然對數為基底。當然對數轉換的最大的限制是資料不能是負數的。
+
+![對數（Log Transformation）轉換對比](https://cdn-images-1.medium.com/max/2000/1*jyYZcgk5jjbTy-f6Tyg0hQ.png)
+
+上面的圖片顯示了對數轉換前後的差異，理想上資料的偏態應該要越靠近 0 越好。
+
+在 Python 中我們可以透過 numpy 來實現這件事，其程式碼如下
+
+```Python
+log_target = np.log1p(df[“Target”])
+```
+
+## 平方根轉換（Square Root Transformation）
+
+第二種方法是平方根轉換（Square Root Transformation），跟對數轉換一樣我們只要取每個資料的平方根就行了。當然平方根轉換跟對數轉換也有一樣的限制是資料不能是負數的。
+
+在 Python 中我們可以透過以下程式碼來實現這件事
+
+```Python
+sqrt_target = df[“Target”]**(1/2)
+```
+
+![平方根（Square Root Transformation）轉換對比](https://cdn-images-1.medium.com/max/2000/1*1Suvi7CP3wOD3g4fjNmDsQ.png)
+
+## 倒數轉換（Reciprocal Transformation）
+
+在倒數轉換中，所有的資料會被轉換為原有資料的倒數，而且倒數轉換只能接受非 0 的數值。
+
+```Python
+    reciprocal_target = 1/df[“Target”]
+```
+
+![倒數轉換（Reciprocal Transformation）前後對比](https://cdn-images-1.medium.com/max/2000/1*gm8xNCO10Z83q4YC1A-K2A.png)
+
+## Box-Cox 轉換（Box-Cox Transformation）
+
+Box-Cox 轉換的適用範圍很廣，Box-Cox 的中有一個 lambda 值可以調節，通常 lambda 的範圍會介於-5 跟 5 之間，當 lambda 等於 0 時其效果跟對數轉換（Log Transformation）是一樣的。在數學上我們可以透過以下方式表達。當然 Box-Cox 也是有其限制存在就是資料只能是正數的。
+
+![Box-Cox 轉換（Box-Cox Transformation）公式](https://cdn-images-1.medium.com/max/2000/1*UUmluswHlNEV-aaSykSJBg.png)
+
+在 Python 上我們可利用 scipy.stats 中的 boxcox 來進行資料的轉換
+
+```Python
+from scipy.stats import boxcox
+
+bcx_target, lam = boxcox(df[“Target”])
+```
+
+![Box-Cox 轉換（Box-Cox Transformation）前後對比](https://cdn-images-1.medium.com/max/2000/1*nvjUlfmWDxXZxJlhrQsDbQ.png)
+
+## Yeo-Johnson 轉換（Yeo-Johnson Transformation）
+
+Yeo-Johnson 轉換跟 Box-Cox 非常類似，差別在於 Yeo-Johnson 轉換並不要求資料是正數的，與 Box-Cox 一樣我們能利用 scipy.yeojohnson 中的 Yeo-Johnson 來進行資料的轉換
+
+```Python
+from scipy.stats import yeojohnson
+
+yf_target, lam = yeojohnson(df[“TARGET”])
+```
+
+![Yeo-Johnson 轉換（Yeo-Johnson Transformation）前後對比](https://cdn-images-1.medium.com/max/2000/1*FPVJN8iXILw2z6AxYM91Jg.png)
+
+## 你喜歡嗎？
+
+喜歡的話可以分享出去，如果不喜歡就……算了，我還是會繼續寫 😂。

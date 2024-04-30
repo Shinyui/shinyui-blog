@@ -1,0 +1,130 @@
+---
+title: 處理資料缺失值的方法 — 完整資料分析（Complete Case Analysis）及 Python實作
+description: 處理資料缺失值的方法 — 完整資料分析（Complete Case Analysis）及 Python實作
+slug: complete-case-analysis
+date: 2020-09-03
+type: Post
+---
+
+在資料分析（Data Analytics）或是機器學習（Machine Learning）專案的生命週期裡裡的資料清洗（Data Cleaning）絕對是不可或缺的一部分。而其中懂得處理資料缺失值（Missing Data）絕對是專案成功的一個關鍵！處理資料缺失值的方法有很多種，在這篇文章中我們會介紹其中最常見的一種方法 — 完整資料分析(Complete Case Analysis)以及背後的 Python 實作！
+
+![Source: [https://fi.pinterest.com/pin/811633164074731545/](https://fi.pinterest.com/pin/811633164074731545/)](https://cdn-images-1.medium.com/max/2000/1*FxeHc3X3WWmpPZ_B63mGag.jpeg)
+
+在今天寫這篇文章時，閱讀到這篇文章 [Untold Truths of being a Machine Learning Engineer](https://towardsdatascience.com/untold-truths-of-being-a-machine-learning-engineer-364218db2317)，當中提到了機器學習工程師會花多數的時間把資料轉換成能反應出實際狀況的資料。
+
+> ML engineers spend most of the time working on “how to properly extract the training set that will resemble real-world problem distribution”
+
+在多數的情況下，當我們能**確實**做好資料的預處理時，即便用一般的機器學習模型也能達成還不錯的效果。
+
+而這篇文章也再次說明了資料預處理的重要性！
+
+## 什麼是完整資料分析（Complete Case Analysis）？
+
+完整資料分析（CCA）的概念看起來好像很複雜，但是在 Python 上的實踐我們可以利用 Pandas 的一個方法就能達到，而且我打賭你一定看過這個方法！
+
+    df = df["tar_variable"].dropna()
+
+是不是很熟悉？沒錯，如果我們"Pandas"的一點來說，完整資料分析其實就只是把缺失的資料刪除掉而已！
+
+![學習處理資料缺失值的方法梗圖](https://cdn-images-1.medium.com/max/2000/1*ZaizbqKoRZQderImKD4JBA.png)
+
+這麼簡單？沒錯就是這麼簡單？簡單的東西我們沒必要把它變得複雜嘛！對吧（當然裝 B 除外 🤣）？
+
+## 完整資料分析假設及適用情況
+
+在完整資料分析中的假設是資料的缺失的模式（Pattern）必須是隨機的，換句缺失資料的是隨機（Random）的也就是**MCAR**（Missing Completely at Random），**不能**有某種的模式存在。
+
+當然不是每種符合 MCAR 的變數都能可以使用 CCA，假如缺失資料的比重占太多，直接採用 CCA 可能會破壞（Distort）那個變數的資料分布狀態（Data Distirbution）。所以缺失值的比例不能太高！
+
+那缺失值的比例超過多少就算高呢？10%？15%？還是 25%？
+
+其實只要缺失值的比例只要超過 5%就不建議採用 CCA，換言之只要 5%以下而且資料的缺失是隨機的就能使用 CCA 喔~~
+
+## 完整資料分析 Python 實作
+
+了解完理論後，接著我們要來學習如何利用 Python 來做 CCA。我們使用的資料集是著名的[Kaggle House Prices: Advanced Regression Techniques](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data?select=train.csv)競賽，資料可以透過上面的連結取得。順帶一提，這場競賽非常適合新手作為第一場的機器學習競賽，如果能打進全球前 5%就很不錯惹~~
+
+喔對了，我們是拿訓練集來 demo 而不是測試集喔！
+
+首先我們 import 一些必要的模塊還有利用 Pandas 讀取資料集，程式碼看起來會像是這樣。
+
+```Python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+data = pd.read_csv(“train.csv”)
+data.head()
+```
+
+輸出結果看起來會是長這樣
+
+![data.head() 輸出結果](https://cdn-images-1.medium.com/max/4820/1*Oog8aOFHzUTkqaYyV6EGSQ.png)
+
+接下來，我們要找出那些自變數（或是特徵）是有缺值的，程式碼看起來會像是這樣。
+
+```Python
+var_na = [col for col in df.columns if df[col].isnull().mean() > 0]
+```
+
+輸出結果看起來會是長這樣
+
+```Python
+['LotFrontage','Alley','MasVnrType','MasVnrArea','BsmtQual','BsmtCond','BsmtExposure','BsmtFinType1','BsmtFinType2','Electrical','FireplaceQu','GarageType','GarageYrBlt','GarageFinish','GarageQual','GarageCond','PoolQC','Fence','MiscFeature']
+```
+
+你可能有注意到我篩選出缺值的變數所採用的方法是 mean 而不是用 sum，原因是因為我們想要得知缺值占該變數的比例，而 mean 可以做到這點。當然我們也是可以用缺值的數量除以全部的數量，不過就有點多此一舉。
+
+還記得我們在上一段有提到缺值要小於 5%才適用 CCA 嗎？接著我們要來篩選出小於 5%的變數，具體而言我們可以利用以下程式碼達成。
+
+```Python
+cca_var = [var for var in df.columns if df[var].isnull().mean() < 0.05]
+```
+
+輸出結果則是
+
+```Python
+["Id","MSSubClass","MSZoning","LotArea","Street","LotShape","LandContour","Utilities","LotConfig","LandSlope","Neighborhood","Condition1","Condition2","BldgType","HouseStyle","OverallQual","OverallCond","YearBuilt","YearRemodAdd","RoofStyle","RoofMatl","Exterior1st","Exterior2nd","MasVnrType","MasVnrArea","ExterQual","ExterCond","Foundation","BsmtQual","BsmtCond","BsmtExposure","BsmtFinType1","BsmtFinSF1","BsmtFinType2","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","Heating","HeatingQC","CentralAir","Electrical","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","KitchenQual","TotRmsAbvGrd","Functional","Fireplaces","GarageCars","GarageArea","PavedDrive","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MiscVal","MoSold","YrSold","SaleType","SaleCondition","SalePrice"];
+```
+
+接著我們要把上面這些變數的缺失值全部 drop 掉，程式碼會長這樣
+
+```Python
+cca_df = df[cca_var].dropna()
+```
+
+接著看一下前後總共刪掉了多少資料
+
+```Python
+cca_df.shape[0], df.shape[0]
+```
+
+執行結果
+
+```Python
+(1412, 1460)
+```
+
+我們總共 drop 掉了 48 筆資料
+
+接下來，我們來看一下 CCA 後的資料變動，我們拿 GrLivArea 這個變數為例。我們可以利用下面這段程式碼來看後續變異的狀況。
+
+```Python
+plt.hist(df[“GrLivArea”], bins=50, color=”red”, label=”Original”)
+plt.hist(cca_df[“GrLivArea”], bins=50, color=”blue”, alpha=0.7, label=”After”)
+plt.legend();
+```
+
+輸出結果會長這樣
+
+![閥值在小於0.05時完整資料分析(CCA)前後對比](https://cdn-images-1.medium.com/max/2836/1*UYGdy8xuwY4lOBG9yZO0EA.png)
+
+我們可以看到整體資料的分布並沒有變太多，這也是為什麼我們要設 0.05 的原因，如果設太高譬如是…… 0.65 好了，資料看起來會像是這樣。
+
+![閥值在小於0.65時完整資料分析(CCA)前後對比](https://cdn-images-1.medium.com/max/2840/1*9bZQje0x3S1Mwn8oY7_cJg.png)
+
+相較上一張圖，我們可以看到資料有了很劇烈的改動。
+
+## 喜歡嗎？
+
+喜歡的話可以分享出去，如果不喜歡就……算了，我還是會繼續寫 😂。
